@@ -1,0 +1,388 @@
+import javax.swing.*;  //imports swing library for the gui components
+import java.awt.*;  //imports awt for layout and components
+import java.util.ArrayList; //importing arrayList from Java Util for dynamic list handling
+import java.util.List;  //importing list interface for storing species data
+
+public class TaxonomyGUI extends JFrame {  //class declaration for the TaxonomyGUI extending JFrame
+
+    private JTextField speciesTextField;  //entering species name
+    //dropdowns
+    private JComboBox<Domain> domainComboBox;
+    private JComboBox<Kingdom> kingdomComboBox;
+    private JComboBox<Phylum> phylumComboBox;
+    private JComboBox<TaxonomyClass> classComboBox;
+    private JTextArea speciesChartArea;  //text box which displays the species and data
+    private JButton addButton;  //button to add new species
+    private JButton organizeButton;  //button to organize the species
+
+
+
+
+    private List<Species> speciesList = new ArrayList<>();  //list which stores species by using species class
+    private OrganizeBy selectedOrganizeBy;  //enum variable which tracks the selected organization criteria
+
+    private enum OrganizeBy {  //enum defining different taxons to organize the species
+        //organized by;
+        DOMAIN,
+        KINGDOM,
+        PHYLUM,
+        CLASS
+    }
+
+    public TaxonomyGUI() {  //constructor TaxonomyGUI class
+        setTitle("Taxonomy Organism Organizer");  //gui window name
+        setSize(800, 600);  //size of the gui window
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);  //closes the gui
+        setLocationRelativeTo(null);  //makes the gui appear in the center of the screen
+
+        JPanel mainPanel = new JPanel() {  //creates a main panel with custom painting
+            @Override
+            protected void paintComponent(Graphics g) {  //overrides paintComponent method for custom painting
+                super.paintComponent(g);  //calls superclass method
+                g.setColor(Color.PINK);  //sets the drawing color to pink
+                g.fillRect(0, 0, getWidth(), getHeight());  //fills the panel with pink
+            }
+        };
+        speciesTextField = new JTextField(20);  //field for entering the species name
+
+        domainComboBox = new JComboBox<>();  //dropdown to select a domain
+        domainComboBox.addItem(Domain.SELECT);  //added a default "SELECT" option to the domain dropdown
+        for (Domain domain : Domain.values()) {  //populates the domain dropdown with available domains
+            domainComboBox.addItem(domain);
+        }
+
+        kingdomComboBox = new JComboBox<>();  //dropdown to select a kingdom
+        kingdomComboBox.addItem(Kingdom.SELECT);  //added a default "SELECT" option to the kingdom dropdown
+
+        phylumComboBox = new JComboBox<>();  //dropdown to select a phylum
+        phylumComboBox.addItem(Phylum.SELECT);  //added a default "SELECT" option to the phylum dropdown
+
+        classComboBox = new JComboBox<>();  //dropdown to select a class
+        classComboBox.addItem(TaxonomyClass.SELECT);  //added a default "SELECT" option to the class dropdown
+
+        speciesChartArea = new JTextArea(20, 50);  //text area to display the species data
+        speciesChartArea.setEditable(false);  //set the text area to be non-editable
+
+        addButton = new JButton("Add Species");  //button to add another specie
+        addButton.addActionListener(e -> addSpecies());  //added an action listener to the add button
+
+        organizeButton = new JButton("Organize Organisms");  //button for organizing the species
+        organizeButton.addActionListener(e -> {  //added an action listener to the organize button
+            switch (selectedOrganizeBy) {  //switch statement based on the selected organization criteria
+
+
+                //lambda expressions used to sort the species by the selected criteria//
+                case DOMAIN:
+                    speciesList.sort((s1, s2) -> s1.getDomain().compareTo(s2.getDomain())); //sorts species by domain
+                    break;
+                case KINGDOM:
+                    speciesList.sort((s1, s2) -> s1.getKingdom().compareTo(s2.getKingdom()));  //sorts species by kingdom
+                    break;
+                case PHYLUM:
+                    speciesList.sort((s1, s2) -> s1.getPhylum().compareTo(s2.getPhylum()));  //sorts species by phylum
+                    break;
+                case CLASS:
+                    speciesList.sort((s1, s2) -> s1.getTaxonomyClass().compareTo(s2.getTaxonomyClass()));  //sort species by taxonomy class
+                    break;
+            }
+            displayOrganisms();  //calls the method to display the organized species
+        });
+
+        JPanel inputPanel = new JPanel(new GridBagLayout());//create a panel for input components using gridbaglayout
+        GridBagConstraints gbc = new GridBagConstraints(); //create constraints for the gridbaglayout
+        gbc.insets = new Insets(5, 5, 5, 5); // set insets for the components//external padding
+        //grid positions x and y
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        inputPanel.add(new JLabel("Species Name: "), gbc); // add a label for species name
+        gbc.gridx = 1; //updates grid position
+        inputPanel.add(speciesTextField, gbc); //add the species text field
+        //resets and updates grid position
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        inputPanel.add(new JLabel("Domain: "), gbc); // adds a label for domain
+        gbc.gridx = 1;
+        inputPanel.add(domainComboBox, gbc); // add the domain combo box
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        inputPanel.add(new JLabel("Kingdom: "), gbc);  // adds a label for kingdom
+        gbc.gridx = 1;
+        inputPanel.add(kingdomComboBox, gbc); // add the kingdom combo box
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        inputPanel.add(new JLabel("Phylum: "), gbc);  //adds a label for phylum
+        gbc.gridx = 1;
+        inputPanel.add(phylumComboBox, gbc);// combobox
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        inputPanel.add(new JLabel("Class: "), gbc);//label
+        gbc.gridx = 1;
+        inputPanel.add(classComboBox, gbc);//combobox
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        gbc.gridwidth = 2;
+        inputPanel.add(addButton, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 6;
+        inputPanel.add(organizeButton, gbc); //adds organize button
+
+
+
+        getContentPane().add(mainPanel); //adds main panel to the content pane
+        setVisible(true);//makes gui visible
+
+        JScrollPane scrollPane = new JScrollPane(speciesChartArea);//scroll pane for the species chart area
+
+        //main panel positions
+        mainPanel.add(inputPanel, BorderLayout.NORTH);
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
+
+        add(mainPanel);// adds main panel to gui
+        setVisible(true);//gui visible
+
+        domainComboBox.addItemListener(e -> { //adds an item listener to the combo boxes
+            //get the selected domain/kingdom/phylum/class from the combo box
+            Domain selectedDomain = (Domain) domainComboBox.getSelectedItem(); //get the selected domain from the combo box
+            populateKingdomComboBox(selectedDomain);//populate the kingdom combo box based on the selected domain
+        });
+
+        kingdomComboBox.addItemListener(e -> {
+            Kingdom selectedKingdom = (Kingdom) kingdomComboBox.getSelectedItem();
+            populatePhylumComboBox(selectedKingdom);//populate the phylum combo box based on the selected kingdom
+        });
+
+        phylumComboBox.addItemListener(e -> {
+            Phylum selectedPhylum = (Phylum) phylumComboBox.getSelectedItem();
+            populateClassComboBox(selectedPhylum);//populate the class combo box based on the selected phylum
+        });
+
+        selectedOrganizeBy = OrganizeBy.DOMAIN;//sets the default organization criteria to domain
+    }
+
+    private void addSpecies() { //method to add a new species
+        String speciesName = speciesTextField.getText(); // gets the species name from the text field
+        Domain domain = (Domain) domainComboBox.getSelectedItem(); //gets the selected domain from the combo box
+        Kingdom kingdom = (Kingdom) kingdomComboBox.getSelectedItem(); //gets the selected kingdom from the combo box
+        Phylum phylum = (Phylum) phylumComboBox.getSelectedItem(); //gets the selected phylum from the combo box
+        TaxonomyClass taxonomyClass = (TaxonomyClass) classComboBox.getSelectedItem();//gets the selected taxonomy class from the combo box
+
+        Species newSpecies = new Species(speciesName, domain, kingdom, phylum, taxonomyClass);// create a new species object
+        speciesList.add(newSpecies);// add the new species to the species list
+
+        displayOrganisms();//display the updated list of organisms
+    }
+
+    private void displayOrganisms() { //method to display the list of organisms
+        speciesChartArea.setText("");//clear the text area
+        for (Species species : speciesList) { //iterates through the species list
+            String speciesInfo = String.format("%-20s %-20s %-20s %-20s %-20s\n",
+                    species.getName(), species.getDomain(), species.getKingdom(), species.getPhylum(), species.getTaxonomyClass());
+            speciesChartArea.append(speciesInfo); //appends species information to the text area
+        }
+    }
+
+    private void populateKingdomComboBox(Domain selectedDomain) {
+        //method to populate the kingdom combo box
+        kingdomComboBox.removeAllItems(); //remove all items from the kingdom combo box
+        kingdomComboBox.addItem(Kingdom.SELECT); //add the default "SELECT" option
+        for (Kingdom kingdom : Kingdom.values()) { // iterate through all kingdoms
+            if (kingdom.getDomain() == selectedDomain) { //filter kingdoms based on selected domain
+                kingdomComboBox.addItem(kingdom); //add the kingdom to the combo box
+            }
+        }
+        //removes all of the items from combo boxes
+        phylumComboBox.removeAllItems();
+        classComboBox.removeAllItems();
+    }
+
+    private void populatePhylumComboBox(Kingdom selectedKingdom) {
+        //method to populate the phylum combo box
+        phylumComboBox.removeAllItems(); //remove all items from the phylum combo box
+        phylumComboBox.addItem(Phylum.SELECT); //add the default "SELECT" option
+        for (Phylum phylum : Phylum.values()) {  //iterate through all phyla
+            if (phylum.getKingdom() == selectedKingdom) { //filter phyla based on selected kingdom
+                phylumComboBox.addItem(phylum); //add the phylum to the combo box
+            }
+        }
+        //removes all items from the combo box
+        classComboBox.removeAllItems();
+        classComboBox.addItem(TaxonomyClass.SELECT); //adds default "SELECT" option
+    }
+
+    private void populateClassComboBox(Phylum selectedPhylum) { //method to populate the class combo box
+        classComboBox.removeAllItems(); //removes all items from the class combo box
+        for (TaxonomyClass taxonomyClass : TaxonomyClass.values()) { //iterates through all taxonomy classes
+            if (taxonomyClass.getPhylum() == selectedPhylum) { //filters classes based on selected phylum
+                classComboBox.addItem(taxonomyClass); //adds the taxonomy class to the combo box
+            }
+        }
+    }
+
+    public static void main(String[] args) { //main method to start the GUI
+        SwingUtilities.invokeLater(TaxonomyGUI::new); //create and display the TaxonomyGUI
+    }
+
+    // Enum domains constants
+    private enum Domain {
+        SELECT,
+        EUKARYA,
+        BACTERIA,
+        ARCHAEA
+    }
+
+    //enum kingdom constants
+    private enum Kingdom {
+        SELECT,
+        //kingdoms (for exp. animalia) belonging to a domain (for exp. eukarya)
+        ANIMALIA(Domain.EUKARYA),
+        FUNGI(Domain.EUKARYA),
+        EUBACTERIA(Domain.BACTERIA),
+        ARCHAEABACTERIA(Domain.ARCHAEA);
+
+        private final Domain domain; //domain associated with the kingdom
+
+        Kingdom(Domain domain) { //constructor with domain parameter
+            this.domain = domain;//initializes the domain
+        }
+
+        Kingdom() {//default constructor
+            this.domain = null; //set the domain to null
+        }
+
+        public Domain getDomain() { //method to get the domain associated with the kingdom
+            return domain;// return the domain
+        }
+    }
+//enum phylum constants
+    private enum Phylum {
+        SELECT,
+
+    //phylums belonging to a kingdom
+        ASCOMYCOTA(Kingdom.FUNGI),
+        BASIDIOMYCOTA(Kingdom.FUNGI),
+        FIRMICUTES(Kingdom.EUBACTERIA),
+        CHLOROFLEXI(Kingdom.EUBACTERIA),
+        CYANOBACTERIA(Kingdom.EUBACTERIA),
+        PROTEOBACTERIA(Kingdom.EUBACTERIA),
+        CHLOROBI(Kingdom.EUBACTERIA),
+        CHORDATA(Kingdom.ANIMALIA),
+        ARTHROPODA(Kingdom.ANIMALIA),
+        MOLLUSCA(Kingdom.ANIMALIA),
+        CRENARCHAEOTA(Kingdom.ARCHAEABACTERIA),
+        KORARCHAEOTA(Kingdom.ARCHAEABACTERIA),
+        EURYARCHAEOTA(Kingdom.ARCHAEABACTERIA);
+
+        private final Kingdom kingdom; //kingdom associated with the phylum
+
+
+    Phylum(Kingdom kingdom) { //constructor with kingdom parameter
+            this.kingdom = kingdom; //initialize the kingdom
+        }
+
+        Phylum() { //default constructor
+            this.kingdom = null; //set the kingdom to null
+        }
+
+        public Kingdom getKingdom() { //method to get the kingdom associated with the phylum
+            return kingdom; //return the kingdom
+        }
+    }
+
+    //enum class constants
+    private enum TaxonomyClass {
+        SELECT,
+        // classes belonging to a phylum
+        MAMMALIA(Phylum.CHORDATA),
+        REPTILIA(Phylum.CHORDATA),
+        AVES(Phylum.CHORDATA),
+        INSECTA(Phylum.ARTHROPODA),
+        ARACHNIDA(Phylum.ARTHROPODA),
+        GASTROPODA(Phylum.MOLLUSCA),
+        AGARICOMYCOTINA(Phylum.ASCOMYCOTA),
+        USTILAGINOMYCOTINA(Phylum.BASIDIOMYCOTA),
+        PUCCINIOMYCOTINA(Phylum.BASIDIOMYCOTA),
+        ENTORRHIZOMYCETES(Phylum.BASIDIOMYCOTA),
+        WALLEMIOMYCETES(Phylum.BASIDIOMYCOTA),
+        ERYSIPELOTRICHIA(Phylum.FIRMICUTES),
+        NEGATIVICUTES(Phylum.FIRMICUTES),
+        LIMNOCHORDIA(Phylum.FIRMICUTES),
+        TISSIERELLIA(Phylum.FIRMICUTES),
+        THERMOLITHOBACTERIA(Phylum.FIRMICUTES),
+        CLOSTRIDIA(Phylum.FIRMICUTES),
+        BACILLI(Phylum.FIRMICUTES),
+        ANAEROLINEAE(Phylum.CHLOROFLEXI),
+        ARDENTICATENIA(Phylum.CHLOROFLEXI),
+        CALDILINEAE(Phylum.CHLOROFLEXI),
+        CHLOROFLEXIA(Phylum.CHLOROFLEXI),
+        DEHALOCOCCOIDIA(Phylum.CHLOROFLEXI),
+        KTEDONOBACTERIA(Phylum.CHLOROFLEXI),
+        THERMOFLEXIA(Phylum.CHLOROFLEXI),
+        THERMOMICROBIA(Phylum.CHLOROFLEXI),
+        CYANOPHYCEAE(Phylum.CYANOBACTERIA),
+        ALPHAPROTEOBACTERIA(Phylum.PROTEOBACTERIA),
+        BETAPROTEOBACTERIA(Phylum.PROTEOBACTERIA),
+        GAMMMAPROTEOBACTERIA(Phylum.PROTEOBACTERIA),
+        DELTAPROTEOBACTERIA(Phylum.PROTEOBACTERIA),
+        EPSILONPROTEOBACTERIA(Phylum.PROTEOBACTERIA),
+        CHLOROBIA(Phylum.CHLOROBI),
+        IGNAVIBACTERIA(Phylum.CHLOROBI),
+        THERMOPHILES(Phylum.CRENARCHAEOTA),
+        MESOPHILES(Phylum.CRENARCHAEOTA),
+        PSYCHROPHILES(Phylum.CRENARCHAEOTA),
+        KORARCHAEIA(Phylum.KORARCHAEOTA),
+        METHANOGENS(Phylum.EURYARCHAEOTA),
+        HALOPHILES(Phylum.EURYARCHAEOTA);
+
+        private final Phylum phylum; //phylum associated with the taxonomy class
+
+        TaxonomyClass(Phylum phylum) {  //constructor with phylum parameter
+            this.phylum = phylum; //initialize the phylum
+        }
+
+        TaxonomyClass() { //default constructor
+            this.phylum = null;  //set the phylum to null
+        }
+
+        public Phylum getPhylum() { //method to get the phylum associated with the taxonomy class
+            return phylum; //return the phylum
+        }
+    }
+
+    private class Species {
+        private String name;
+        private Domain domain;
+        private Kingdom kingdom;
+        private Phylum phylum;
+        private TaxonomyClass taxonomyClass;
+
+        public Species(String name, Domain domain, Kingdom kingdom, Phylum phylum, TaxonomyClass taxonomyClass) { //class to represent a species
+            this.name = name; //name of the species
+            //other parameters for the species
+            this.domain = domain;
+            this.kingdom = kingdom;
+            this.phylum = phylum;
+            this.taxonomyClass = taxonomyClass;
+        }
+
+        //methods to get name, domain, etc. of a species and to return the name, domain, etc.
+        public String getName() {
+            return name;
+        }
+
+        public Domain getDomain() {
+            return domain;
+        }
+
+        public Kingdom getKingdom() {
+            return kingdom;
+        }
+
+        public Phylum getPhylum() {
+            return phylum;
+        }
+
+        public TaxonomyClass getTaxonomyClass() {
+            return taxonomyClass;
+        }
+    }
+}
